@@ -1,170 +1,97 @@
-<div align="center">
-  <h1 align="center">Unitree GO2 GYM --YuSongmin</h1>
-  <p align="center">
+# WOAN_GYM
 
-  </p>
-</div>
+自研机器狗（4310电机）强化学习训练框架，基于 IsaacGym。
 
-<p align="center">
-  🎮🚪 <strong>这是一个基于 Unitree 机器人实现强化学习的示例仓库开源后修改而成的仓库，支持 Unitree Go2。</strong> 🚪🎮
-</p>
+## 一、环境搭建
 
----
-
-## 🔁 流程说明
-
-强化学习实现运动控制的基本流程为：
-
-`Train` → `Play` → `Sim2Sim` → `Sim2Real`
-
-- **Train**: 通过 Gym 仿真环境，让机器人与环境互动，找到最满足奖励设计的策略。通常不推荐实时查看效果，以免降低训练效率。
-- **Play**: 通过 Play 命令查看训练后的策略效果，确保策略符合预期。
-- **Sim2Sim**: 将 Gym 训练完成的策略部署到其他仿真器，避免策略小众于 Gym 特性。
-- **Sim2Real**: 将策略部署到实物机器人，实现运动控制。
-
-## 🛠️ 使用指南
-### 0. 安装依赖
-python环境：3.8
-#### Isaacgym 安装
+### 拉取代码仓库
 
 ```bash
-pip install -e ~/isaacgym/python
+git clone https://github.com/XUEHAIXU/WOAN_GYM.git
 ```
-#### rsl 
+
+### 创建 conda 环境
+
 ```bash
-pip install -e ./rsl_rl
+conda create -n woan4310 python=3.8
+conda activate woan4310
 ```
-#### legged_gym
+
+### 安装 IsaacGym
+
+官网下载安装包：https://developer.nvidia.com/isaac-gym/download
+
 ```bash
+tar -xvf IsaacGym_Preview_4_Package.tar.gz
+cd isaacgym/python
 pip install -e .
 ```
 
-
-### 1. 训练
-
-运行以下命令进行训练：
-```bash
-python legged_gym/scripts/train.py --task=go2_trot --headless
-```
+### 安装 rsl-rl 算法库
 
 ```bash
-python legged_gym/scripts/train.py --task=go2_stairs --headless
+cd rsl_rl
+pip install -e .
 ```
+
+### 安装 WOAN_GYM
 
 ```bash
-python legged_gym/scripts/train.py --task=go2_jump --headless
+cd WOAN_GYM
+pip install -e .
 ```
+
+### 设置环境变量
 
 ```bash
-python legged_gym/scripts/train.py --task=go2_handstand --headless
+export PYTHONPATH=/你的isaacgym路径/isaacgym/python:$PYTHONPATH
+export PYTHONPATH=/你的rsl_rl路径:$PYTHONPATH
 ```
+
+### 常见问题
+
+若出现 `numpy` 报错：
+
+```
+AttributeError: module 'numpy' has no attribute 'float'.
+```
+
+修改 isaacgym/torch_utils.py：
 
 ```bash
-python legged_gym/scripts/train.py --task=go2_leggedstand --headless
+sed -i 's/np\.float/float/g' /你的isaacgym路径/isaacgym/python/isaacgym/torch_utils.py
 ```
+
+## 二、训练
+
+训练（关闭可视化）：
 
 ```bash
-python legged_gym/scripts/train.py --task=go2_spring_jump --headless
+python legged_gym/scripts/train.py --task=woan4310 --headless
 ```
-```bash
-python legged_gym/scripts/train.py --task=go2_backflip --headless
-```
-目前可用的任务有：
-- go2_trot
-- go2_jump
-- go2_spring_jump
 
-- go2_handstand
-- go2_leggedstand
-下面这两个任务仿真中没问题了，我认为实物上应该没问题，但是目前没有实物，所以暂时没有测试，月底会测试的。
-
-其他任务或多或少有点问题，有时间的话会修复的。
-#### ⚙️  参数说明
-- `--task`: 必选参数，值可选(go2, g1, h1, h1_2)
-- `--headless`: 默认启动图形界面，设为 true 时不渲染图形界面（效率更高）
-- `--resume`: 从日志中选择 checkpoint 继续训练
-- `--experiment_name`: 运行/加载的 experiment 名称
-- `--run_name`: 运行/加载的 run 名称
-- `--load_run`: 加载运行的名称，默认加载最后一次运行
-- `--checkpoint`: checkpoint 编号，默认加载最新一次文件
-- `--num_envs`: 并行训练的环境个数
-- `--seed`: 随机种子
-- `--max_iterations`: 训练的最大迭代次数
-- `--sim_device`: 仿真计算设备，指定 CPU 为 `--sim_device=cpu`
-- `--rl_device`: 强化学习计算设备，指定 CPU 为 `--rl_device=cpu`
-
-**默认保存训练结果**：`logs/<experiment_name>/<date_time>_<run_name>/model_<iteration>.pt`
-
----
-
-### 2. Play
-
-如果想要在 Gym 中查看训练效果，可以运行以下命令：
+训练完成后，查看训练成果：
 
 ```bash
-python legged_gym/scripts/play.py --task=go2_trot
+python legged_gym/scripts/play.py --task=woan4310
 ```
 
-```bash
-python legged_gym/scripts/play.py --task=go2_spring_jump
+训练过程中可以使用 tensorboard 查看数据。
+
+## 项目结构
+
 ```
-
-```bash
-python legged_gym/scripts/play.py --task=go2_handstand
+legged_gym/
+├── envs/
+│   ├── base/                          # 核心底层逻辑
+│   │   ├── base_config.py             # 全局配置模板（环境数、设备等）
+│   │   ├── base_task.py               # 仿真器接口（Step, Reset 实现）
+│   │   ├── legged_robot.py            # 机器人物理逻辑（传感器、物理驱动、奖励计算）
+│   │   └── legged_robot_config.py     # 机器人默认配置（默认PID、默认奖励权重）
+│   └── WOAN4310_MoB/WOAN4310_Trot/    # 4310机器狗任务特化
+│       ├── WOAN4310_config.py
+│       └── WOAN4310.py
+└── scripts/
+    ├── train.py                       # 训练启动脚本
+    └── play.py                        # 验证与导出脚本
 ```
-```bash
-python legged_gym/scripts/play.py --task=go2_leggedstand
-```
-```bash
-python legged_gym/scripts/play.py --task=go2_stairs
-```
-
-```bash
-python legged_gym/scripts/play.py --task=go2_jump
-```
-
-```bash
-python legged_gym/scripts/play.py --task=go2_backflip
-```
-**说明**：
-
-- Play 启动参数与 Train 相同。
-- 默认加载实验文件夹上次运行的最后一个模型。
-- 可通过 `load_run` 和 `checkpoint` 指定其他模型。
-
-#### 💾 导出网络
-
-Play 会导出 Actor 网络，保存于 `logs/{experiment_name}/exported/policies` 中：
-- 普通网络（MLP）导出为 `policy_1.pt`
-
-
-# 问题 与后续修改的计划
-
-staris level up slow not slove
-
-pakour(PIE)
-
-Perspective RL
-
-backflip
-
-sideflip
-
-# 参考文章
-https://arxiv.org/pdf/2205.02824
-
-https://arxiv.org/pdf/2309.05665
-
-https://arxiv.org/abs/2212.03238
-
-https://arxiv.org/abs/2409.15755
-
-https://arxiv.org/abs/2401.16337
-
-https://arxiv.org/abs/2301.10602
-
-https://arxiv.org/abs/2312.11460
-
-Learning Robust and Agile Legged Locomotion Using Adversarial Motion Priors
-
-Learning Multiple Gaits within Latent Space for Quadruped Robots# WOAN_GYM
